@@ -1,0 +1,8 @@
+version: "3.8"
+
+services:
+  face-detection-service:
+    image: 4nm2/face-detection-service-py:latest
+    ports:
+      - "50051:50051"
+    restart: always
