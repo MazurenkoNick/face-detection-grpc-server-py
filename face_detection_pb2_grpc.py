@@ -26,8 +26,7 @@ if _version_not_supported:
 
 
 class FaceDetectionServiceStub(object):
-    """Опис сервісу FaceDetectionService
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -35,20 +34,18 @@ class FaceDetectionServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.ValidateFace = channel.unary_unary(
+        self.ValidateFace = channel.stream_unary(
                 '/face_detection.FaceDetectionService/ValidateFace',
-                request_serializer=face__detection__pb2.FaceValidationRequest.SerializeToString,
+                request_serializer=face__detection__pb2.ImageChunk.SerializeToString,
                 response_deserializer=face__detection__pb2.FaceValidationResponse.FromString,
                 _registered_method=True)
 
 
 class FaceDetectionServiceServicer(object):
-    """Опис сервісу FaceDetectionService
-    """
+    """Missing associated documentation comment in .proto file."""
 
-    def ValidateFace(self, request, context):
-        """Метод для перевірки валідності обличчя
-        """
+    def ValidateFace(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -56,9 +53,9 @@ class FaceDetectionServiceServicer(object):
 
 def add_FaceDetectionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'ValidateFace': grpc.unary_unary_rpc_method_handler(
+            'ValidateFace': grpc.stream_unary_rpc_method_handler(
                     servicer.ValidateFace,
-                    request_deserializer=face__detection__pb2.FaceValidationRequest.FromString,
+                    request_deserializer=face__detection__pb2.ImageChunk.FromString,
                     response_serializer=face__detection__pb2.FaceValidationResponse.SerializeToString,
             ),
     }
@@ -70,11 +67,10 @@ def add_FaceDetectionServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class FaceDetectionService(object):
-    """Опис сервісу FaceDetectionService
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def ValidateFace(request,
+    def ValidateFace(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -84,11 +80,11 @@ class FaceDetectionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
+        return grpc.experimental.stream_unary(
+            request_iterator,
             target,
             '/face_detection.FaceDetectionService/ValidateFace',
-            face__detection__pb2.FaceValidationRequest.SerializeToString,
+            face__detection__pb2.ImageChunk.SerializeToString,
             face__detection__pb2.FaceValidationResponse.FromString,
             options,
             channel_credentials,

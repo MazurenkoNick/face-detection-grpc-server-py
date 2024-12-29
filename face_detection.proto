@@ -1,22 +1,20 @@
 syntax = "proto3";
 
-option java_package = "io.grpc.examples.routeguide";
+ option java_multiple_files = true;
+ option java_package = "com.face.faceanalyzer.proto";
 
 package face_detection;
 
-// Опис сервісу FaceDetectionService
 service FaceDetectionService {
-  // Метод для перевірки валідності обличчя
-  rpc ValidateFace (FaceValidationRequest) returns (FaceValidationResponse);
+  rpc ValidateFace (stream ImageChunk) returns (FaceValidationResponse);
 }
 
-// Повідомлення для запиту
-message FaceValidationRequest {
-  bytes image = 1; // Зображення у форматі байтів
+
+message ImageChunk  {
+  bytes image = 1;
 }
 
-// Повідомлення для відповіді
 message FaceValidationResponse {
-  bool is_valid = 1;       // Чи валідне обличчя
-  string message = 2;      // Повідомлення про результат
+  bool is_valid = 1;
+  string message = 2;
 }
