@@ -1,70 +1,75 @@
-from concurrent import futures
 import grpc
 import cv2
 import numpy as np
+from concurrent import futures
 import face_detection_pb2
 import face_detection_pb2_grpc
 
-# Constants
-MIN_AREA_RATIO = 0.15
-
-# Load the pre-trained face detection model
-faceCascade = cv2.CascadeClassifier('model/haarcascade_default.xml')
-
+# Face detection logic
 class FaceDetectionService(face_detection_pb2_grpc.FaceDetectionServiceServicer):
 
-    def ValidateFace(self, request, context):
-        # Decode the image from the request
-        nparr = np.frombuffer(request.image, np.uint8)
+    def __init__(self):
+        self.faceCascade = cv2.CascadeClassifier('model/haarcascade_default.xml')
+        self.MIN_AREA = 0.15
+        self.size = (640, 480)
+
+    def ValidateFace(self, request_iterator, context):
+        print("validating face")
+        # Receive the image chunks
+        image_data = b''
+        for chunk in request_iterator:
+            print("read chunk")
+            image_data += chunk.image
+        
+        print("decode to img")
+        # Decode the received image
+        nparr = np.frombuffer(image_data, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if img is None:
             return face_detection_pb2.FaceValidationResponse(
-                is_valid=False, message="Invalid image format."
+                is_valid=False,
+                message="Invalid image format"
             )
-
-        # Get image dimensions
-        image_height, image_width = img.shape[:2]
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Detect faces
-        detections = faceCascade.detectMultiScale(
-            gray, scaleFactor=1.2, minNeighbors=5, minSize=(20, 20)
-        )
-
-        if len(detections) == 0:
-            return face_detection_pb2.FaceValidationResponse(
-                is_valid=False, message="No faces detected."
-            )
+        detections = self.faceCascade.detectMultiScale(
+            gray, scaleFactor=1.2, minNeighbors=5, minSize=(20, 20))
 
         if len(detections) > 1:
             return face_detection_pb2.FaceValidationResponse(
-                is_valid=False, message="Multiple faces detected."
+                is_valid=False,
+                message=f"Multiple faces detected ({len(detections)})"
             )
-
-        x, y, w, h = detections[0]
-        face_area = w * h
-        image_area = image_width * image_height
-        area_ratio = face_area / image_area
-
-        if area_ratio < MIN_AREA_RATIO:
+        elif len(detections) == 0:
             return face_detection_pb2.FaceValidationResponse(
-                is_valid=False, message="Face is too small."
+                is_valid=False,
+                message="No faces detected"
             )
 
-        # If all checks pass, return success
+        for x, y, w, h in detections:
+            percent = (w * h) / (self.size[0] * self.size[1])
+            if percent < self.MIN_AREA:
+                return face_detection_pb2.FaceValidationResponse(
+                    is_valid=False,
+                    message=f"Face too small! Area={percent*100:.2f}% < {self.MIN_AREA*100:.2f}%"
+                )
+
         return face_detection_pb2.FaceValidationResponse(
-            is_valid=True, message=f"Face is valid. Image dimensions: {image_width}x{image_height}."
+            is_valid=True,
+            message=f"Face detected. Area={percent*100:.2f}%"
         )
 
+# Server setup
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     face_detection_pb2_grpc.add_FaceDetectionServiceServicer_to_server(FaceDetectionService(), server)
     server.add_insecure_port('[::]:50051')
-    print("Face Detection Service is running on port 50051...")
+    print("Server started on port 50051")
     server.start()
     server.wait_for_termination()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     serve()
